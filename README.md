@@ -1,8 +1,10 @@
+```
 <p align="center">
-  <img src="https://raw.githubusercontent.com/SeldonIO/alibi/master/doc/source/_static/Alibi_Explain_Logo_rgb.png" alt="Alibi Logo" width="50%">
+  <img src=Dirección web de una imagen que resuma el proceso alt="Alibi Logo" width="50%">
 </p>
+```
 
-TODO:...
+This repository presents the code of the EDC (Example-Dependent Cost) Counterfactual method. Also contains the code to reproduce experiments with 6 real-world datasets and to compare its performance againts the counterfactuals of other 3 state-of-the-art benchmark methods.
 
 # EDC_counterfactuals
 A method to generate Example-Dependent-Cost Counterfactuals on Neural Networks
@@ -11,12 +13,12 @@ A method to generate Example-Dependent-Cost Counterfactuals on Neural Networks
 
 * [Installation and Usage](#installation-and-usage)
 * [Supported Methods](#supported-methods)
+  * [Proposed method](#Proposed-method)
   * [Alibi CEM](#Alibi-CEM)
   * [Alibi Proto](#Alibi-Proto)
   * [GRACE](#GRACE)
-  * [Proposed_method](#Proposed_method)
 * [Citations](#citations)
-* 
+
 ## Installation and Usage
 The code can be downloaded directly from this repository. Also, to run the code you must create an environment. The python version and packages variates depending on which counterfactual model you want to use. The configuration of each environment can be done with Anaconda or Miniconda. The aviable counterfactual methods are:
 
@@ -96,6 +98,21 @@ The code can be downloaded directly from this repository. Also, to run the code 
 
 ### Usage
 TODO... Explicar como se ejecutan los notebooks y como se pueden reproducir los experimentos del paper
+
+## Supported Methods
+This section summarize the supported models, i.e., the porposed_method and 3 benchmark models.
+
+### Proposed method
+TODO: ...
+
+### Alibi CEM
+TODO: ...
+
+### Alibi Proto
+TODO: ...
+
+### GRACE
+TODO: ...
 
 ## Citations
 If you use the proposed_method in your research, please consider citing it.
