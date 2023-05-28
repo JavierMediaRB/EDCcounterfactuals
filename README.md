@@ -1,6 +1,6 @@
 ```
 <p align="center">
-  <img src=Dirección web de una imagen que resuma el proceso alt="Alibi Logo" width="50%">
+  <img src=Dirección web de una imagen que resuma el proceso alt="EDC counterfactual Logo" width="50%">
 </p>
 ```
 
