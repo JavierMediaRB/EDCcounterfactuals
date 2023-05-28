@@ -1,0 +1,9 @@
+#Anaconca3
+#Python==3.7.3
+numpy==1.16.4
+pandas==0.24.0
+matplotlib==3.1.0
+torch==1.1.0
+ipykernel
+PyYAML
+tqdm

@@ -1,0 +1,87 @@
+{
+        filter_original_minoritary_predictions: True,
+        TCC: {
+                RB: 1,  # 2.8 / 2.8
+                NN: 2,
+                lr: 0.001, # Default lr
+                gen_gamma: 0.0,
+                gen_max_features: 26,
+                gen_max_iter: 100,
+                gen_overshoot: -0.8,
+                explain_units: "%",
+                extra_params: {},
+        },
+        HMEQ: {
+                RB: 1,  # 4 / 4
+                NN: 150,
+                lr: 0.001, # Default lr
+                gen_gamma: 0.0,
+                gen_max_features: 10,
+                gen_max_iter: 2000,
+                gen_overshoot: -0.95,
+                explain_units: "%",
+                extra_params: {},
+        },
+        CCF: {
+                RB: 14.445,  # 57.78 / 4
+                NN: 60,
+                lr: 0.001, # Default lr
+                gen_gamma: 0.0,
+                gen_max_features: 10,
+                gen_max_iter: 2000,
+                gen_overshoot: -0.99,
+                explain_units: "%",
+                extra_params: {},
+        },
+        MKT: {
+                RB: 11.8,  # 5.9 / 0.5
+                NN: 2,
+                lr: 0.001, # Default lr
+                gen_gamma: 0.0,
+                gen_max_features: 32,
+                gen_max_iter: 200,
+                gen_overshoot: -0.8,
+                explain_units: "%",
+                extra_params: {},
+        },
+        CS1: {
+                RB: 3.45,  # 13.8 / 4.0
+                NN: 10,
+                lr: 0.001, # Default lr
+                gen_gamma: 0.0,
+                gen_max_features: 10,
+                gen_max_iter: 250,
+                gen_overshoot: -0.6,
+                explain_units: "%",
+                extra_params: {
+                                int_r: 0.003991666,  # 0.0479 / 12,
+                                int_cf: 0.00245,  # 0.0294 / 12
+                                cl_max: 25000,
+                                n_term: 24,
+                                k: 3,
+                                lgd: 0.75,
+                                pi_1: 0.06744916515126467,  # target_0_1.mean()
+                                cl_avg: 16651.39167556741,  # cl.mean()
+                },
+        },
+        CS2: {
+                RB: 2,  # 4 / 2
+                NN: 5,
+                lr: 0.001, # Default lr
+                gen_gamma: 0.0,
+                gen_max_features: 34,
+                gen_max_iter: 300,
+                gen_overshoot: -0.6,
+                explain_units: "%",
+                extra_params: {
+                                int_r: 0.0525,  # 0.63 / 12,
+                                int_cf: 0.01375,  # 0.165 / 12
+                                cl_max: 8250,  # 25000 * 0.33
+                                n_term: 24,
+                                k: 3,
+                                lgd: 0.75,
+                                pi_1: 0.198849433277403,  # target_0_1.mean()
+                                cl_avg: 626.7631418177616,  # cl.mean()
+                },
+        },
+}
