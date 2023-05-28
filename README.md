@@ -22,17 +22,40 @@ A method to generate Example-Dependent-Cost Counterfactuals on Neural Networks
 ## Installation and Usage
 The code can be downloaded directly from this repository. Also, to run the code you must create an environment. The python version and packages variates depending on which counterfactual model you want to use. The configuration of each environment can be done with Anaconda or Miniconda. The aviable counterfactual methods are:
 
+- Proposed_method
 - Alibi CEM: from https://pypi.org/project/alibi and https://github.com/SeldonIO/alibi
 - Alibi Proto: from https://pypi.org/project/alibi and https://github.com/SeldonIO/alibi
 - Grace: from https://github.com/lethaiq/GRACE_KDD20
-- Proposed_method
+
+### Environment for proposed_method:
+
+- Create a new environment with conda:
+
+  ```bash
+  conda create -n env_proposed_method python=3.8.16
+  ```
+  
+- Activate the environment:
+  ```bash
+  conda activate env_proposed_method
+  ```
+
+- Upgrade pip:
+  ```bash
+  pip install --upgrade pip
+  ```
+
+- Install the packages following the corresponding requirements file:
+  ```bash
+  pip install -r requirements_env_proposed_method.txt
+  ```
 
 ### Environment for Alibi CEM and Alibi Proto methods
 
 - Create a new environment with conda:
 
   ```bash
-  conda create -n env_alibi python=
+  conda create -n env_alibi python=3.8.13
   ```
   
 - Activate the environment:
@@ -55,7 +78,7 @@ The code can be downloaded directly from this repository. Also, to run the code 
 - Create a new environment with conda:
 
   ```bash
-  conda create -n env_grace python=
+  conda create -n env_grace python=3.8.16
   ```
   
 - Activate the environment:
@@ -71,29 +94,6 @@ The code can be downloaded directly from this repository. Also, to run the code 
 - Install the packages following the corresponding requirements file:
   ```bash
   pip install -r requirements_grace.txt
-  ```
-  
-### Environment for proposed_method:
-
-- Create a new environment with conda:
-
-  ```bash
-  conda create -n env_proposed_method python=
-  ```
-  
-- Activate the environment:
-  ```bash
-  conda activate env_proposed_method
-  ```
-
-- Upgrade pip:
-  ```bash
-  pip install --upgrade pip
-  ```
-
-- Install the packages following the corresponding requirements file:
-  ```bash
-  pip install -r requirements_env_proposed_method.txt
   ```
 
 ### Usage
