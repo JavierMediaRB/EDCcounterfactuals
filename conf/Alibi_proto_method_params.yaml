@@ -1,0 +1,81 @@
+{
+        filter_original_minoritary_predictions: True,
+        TCC: {
+                RB: 1,  # 2.8 / 2.8
+                NN: 2,
+                use_kdtree: True, 
+                theta: 10.0, 
+                max_iterations: 700,
+                c_init: 1.0, 
+                c_steps: 10,
+                extra_params: {},
+        },
+        HMEQ: {
+                RB: 1,  # 4 / 4
+                NN: 150,
+                use_kdtree: True, 
+                theta: 9.0, 
+                max_iterations: 500,
+                c_init: 0.4, 
+                c_steps: 3,
+                extra_params: {},
+        },
+        CCF: {
+                RB: 14.445,  # 57.78 / 4
+                NN: 60,
+                use_kdtree: True, 
+                theta: 10.0, 
+                max_iterations: 700,
+                c_init: 1.0, 
+                c_steps: 10,
+                extra_params: {},
+        },
+        MKT: {
+                RB: 11.8,  # 5.9 / 0.5
+                NN: 2,
+                use_kdtree: True, 
+                theta: 10.0, 
+                max_iterations: 50,
+                c_init: 1.0, 
+                c_steps: 10,
+                extra_params: {},
+        },
+        CS1: {
+                RB: 3.45,  # 13.8 / 4.0
+                NN: 10,
+                use_kdtree: True, 
+                theta: 11.0, 
+                max_iterations: 50,
+                c_init: 1.0, 
+                c_steps: 12,
+                extra_params: {
+                                int_r: 0.003991666,  # 0.0479 / 12,
+                                int_cf: 0.00245,  # 0.0294 / 12
+                                cl_max: 25000,
+                                n_term: 24,
+                                k: 3,
+                                lgd: 0.75,
+                                pi_1: 0.06744916515126467,  # target_0_1.mean()
+                                cl_avg: 16651.39167556741,  # cl.mean()
+                },
+        },
+        CS2: {
+                RB: 2,  # 4 / 2
+                NN: 5,
+                use_kdtree: True, 
+                theta: 8.0, 
+                max_iterations: 15,
+                c_init: 1.0, 
+                c_steps: 8,
+                extra_params: {
+                                int_r: 0.0525,  # 0.63 / 12,
+                                int_cf: 0.01375,  # 0.165 / 12
+                                cl_max: 8250,  # 25000 * 0.33
+                                n_term: 24,
+                                k: 3,
+                                lgd: 0.75,
+                                pi_1: 0.198849433277403,  # target_0_1.mean()
+                                cl_avg: 626.7631418177616,  # cl.mean()
+                },
+        },
+}
