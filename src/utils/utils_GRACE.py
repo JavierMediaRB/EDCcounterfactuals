@@ -12,23 +12,58 @@ from src.benchmarks.GRACE_method.grace import test_grace
 
 
 class trainer_custom:
+    """
+    Auxuliar class to connect the Basic_MLP class used in the experiments to the functions in the GRACE method.
 
-    def __init__(self, model):
+    Params:
+        model (Basic_MLP): The model to connect to the GRACE class.
+    """
+
+    def __init__(self, model: Basic_MLP):
         self.model = model
 
-    def predict(self, sample):
-        """frontera = 0.0
-        x = torch.from_numpy(sample).type(torch.FloatTensor)
-        self.model.eval()
-        f = self.model.forward(x).detach().flatten().numpy()
-        y_pred = f > frontera
-        y_pred = (y_pred + 0.0)"""
+    def predict(self, sample: torch.Tensor) -> numpy.ndarray:
+        """
+        A function that call the 'predict_class' function from the Basic_MLP class. It just evaluates the model
+        and predicts the class for a input sample.
+
+        Args:
+            sample (torch.Tensor): The input sample data.
+
+        Returns:
+            y_pred (numpy.ndarray): The predicted class.
+        """
+
         y_pred = self.model.predict_class(sample)
         return y_pred
 
 
-def test_aux_custom(train_data, test_data, model, scaler, args):
-    # load data and model
+def test_aux_custom(train_data: numpy.ndarray,
+                    test_data: numpy.ndarray,
+                    model: Basic_MLP,
+                    scaler: object,
+                    args: arguments
+                    ) -> typing.Dict[str, object]:
+    """
+    This function connect the Basic_MLP class method to GRACE methods by means of the auxiliar 'trainer_custom' class.
+
+    Args:
+        train_data (numpy.ndarray): The input train data.
+        test_data (numpy.ndarray): The input test data.
+        model (Basic_MLP): The model to connect to the GRACE class.
+        scaler (object): Defatul to None.
+        args (arguments): The object class 'arguments' from GRACE containing the experiment params.
+
+    Returns:
+        original_samples (numpy.ndarray): The original input test data.
+        o_original_samples (torch.Tensor): The model outputs for the test data.
+        y_pred_original_samples (numpy.ndarray): The model class predictions for the test data.
+        counterfactual_samples (numpy.ndarray): The computed counterfactual samples.
+        o_counterfactual_samples (torch.Tensor): The output of the model for the counterfactual samples.
+        y_pred_counterfactual_samples (numpy.ndarray): The model class predictions for the counterfactual samples.
+    """
+
+    # Instanciate the trainer_custom class with the Basic_MLP class model
     trainer = trainer_custom(model)
 
     # configurations for generating explanation
@@ -51,16 +86,11 @@ def test_aux_custom(train_data, test_data, model, scaler, args):
                          alphas=alphas,
                          feature_selector=feature_selector)
 
-    # avg_feat_changed = results['avg_feat_changed']
-    # fidelity = results['fidelity']
-    # print_results(avg_feat_changed, fidelity)
-
     orig_test_samples = test_data
     original_test_prediction = results['original_label']
     contrafactual_test_samples = results['counterfactual_x']
     counterfactual_test_prediction = results['counterfactual_label']
     counterfactual_output_model = results['counter_probs']
-    # model.forward_2_outputs(Variable(torch.from_numpy(x_adv))).data.cpu().numpy().flatten()
     o_orig_ts = model.forward_2_outputs(torch.autograd.Variable(torch.from_numpy(test_data)))
     o_orig_ts = o_orig_ts.data.cpu().detach().numpy().flatten()
 
@@ -84,40 +114,66 @@ def search_counterfactuals_GRACE(name_dataset: str,
                                  small_test: bool = False
                                  ) -> typing.Dict[str, object]:
     """
-    ... TODO...
+    This function performs the pipeline process to generate a set of counterfactual samples for the GRACE method.
+    The process have the following consecutive steps:
+
+        1. Load the needed params for the experiment
+        2. Load the data from the variable 'loaded_dataset'
+        3. Set the optimization restrictions (if aplicable)
+        4. Compute an initial prediction on the test data with the 'NN_model' model to select only the
+           samples that are originally predicted in the minoritary class.
+        5. If the param 'small_test' is True, select just the first 2 samples to reduce the computational cost. This is
+           usefull to debug the code if necessary.
+        6. Call the GRACE method to perform the searching of counterfactuals.
+        7. Compute some aditional variables like the costs of the founded counterfactual sample, and store them.
 
     [Warning]: Part of the function returns are probabilies. In this code, the probability is understood as the prob of
                a sample belonging to class 1, that is, the minority class.
+
     Args:
-        name_dataset (str):
-        loaded_dataset (typing.Dict[str, object]):
-        params (typing.Dict[str, object]):
-        figure (bool):
+        name_dataset (str): The name of the dataset to access to the conf params
+        NN_model (Basic_MLP): A NN model from the class Basic_MLP.
+        loaded_dataset (typing.Dict[str, object]): A dictionary containing the dataset data with the variables:
+                                                     - 'tensor_x_ts': tensor_x_ts,
+                                                     - 'tensor_y_ts': tensor_y_ts,
+                                                     - 'tensor_Cs01': tensor_Cs01,
+                                                     - 'tensor_Cs10': tensor_Cs10,
+                                                     - 'tensor_Cs11': tensor_Cs11,
+                                                     - 'tensor_Cs00': tensor_Cs00,
+                                                     - 'tensor_x_tr': tensor_x_tr,
+                                                     - 'tensor_y_tr': tensor_y_tr,
+                                                     - 'tensor_Cr01': tensor_Cr01,
+                                                     - 'tensor_Cr10': tensor_Cr10,
+                                                     - 'tensor_Cr11': tensor_Cr11,
+                                                     - 'tensor_Cr00': tensor_Cr00,
+                                                     - 'IR_tr': IR_tr,
+                                                     - 'mean_tr': mean_tr,
+                                                     - 'std_tr': std_tr,
+        params (typing.Dict[str, object]): Contais the parameters that might be needed for the process. Defatul to {}.
+        figure (bool): In this function is useless. We keep this variable to maintain a common code structure for all
+                       the counterfactual methods.
         verbose (int): Depending on the number diferent level information is printed.
                        [0: no prints; 1: high level information; 2: full detail]. Default to 1.
-        small_test (bool): If True, the test data will be croped in order to reduce the computational cost of the
-                           experiments for debugging processes.
+        small_test (bool): If True, the samples used to compute the counterfactuals are reduced to 2. In orther to
+                           reduce the computational cost to debug the code. Defatul to False.
 
     Returns:
-        Xts_filtered ():
-        lr_reg ():
-        o_pred_orig ():
-        y_pred_original ():
-        list_counter_samples ()
-        o_pred_counter ():
-        y_pred_counter ():
-        cost_matrix ():
-        Yts_filtered ():
-        success_vars ():
-            list_discriminant_final ():
-            list_g_final ():
-            list_f_final ():
-            list_g_inicial ():
-            list_f_inicial ():
-
+        original_samples (numpy.ndarray): The Xts data only for the samples originally classified as the minoritary
+                                          class.
+        lr_regularization (float): The regularization used for the optimization process.
+        o_original_samples (torch.Tensor): The output of the model for the original samples.
+        y_pred_original_samples (numpy.ndarray): The predicted class of the model for the original samples.
+        counterfactual_samples (numpy.ndarray): Contains the computed counterfactual samples.
+        o_counterfactual_samples (torch.Tensor): The output of the model for the counterfactual samples.
+        y_pred_counterfactual_samples (numpy.ndarray): The predicted class of the model for the counterfactual samples.
+        cost_matrix (pandas.DataFrame): Contains the example-dependent costs for the original and counterfactual samples
+        y_true_orignal_samples (numpy.ndarray): The Yts data only for the samples originally classified as the
+                                                minoritary class.
     """
+
     if verbose > 0:
         print('\n[Process] START counterfactual search')
+
     # ######## Params ######## #
     scaler = None
     lr = params[name_dataset]['lr']
@@ -139,7 +195,6 @@ def search_counterfactuals_GRACE(name_dataset: str,
     # ######################## #
 
     # ######## loaded dataset ######## #
-    # TODO: No se si me gusta, ya que estoy obligando a esta forma de pasar el dato...
     tensor_x_ts = loaded_dataset['tensor_x_ts']
     tensor_y_ts = loaded_dataset['tensor_y_ts']
     tensor_x_tr = loaded_dataset['tensor_x_tr']
@@ -193,14 +248,6 @@ def search_counterfactuals_GRACE(name_dataset: str,
                                                                          f"{key_orig}_c11",
                                                                          f"{key_orig}_c01",
                                                                          f"{key_orig}_c10"])
-
-    """list_counter_samples = []
-    list_final_epoch = []
-    list_discriminant_final = []
-    list_g_final = []
-    list_f_final = []
-    list_g_initial = []
-    list_f_initial = []"""
 
     counter_search_result = test_aux_custom(train_data=tensor_x_tr.detach().numpy().copy(),
                                             test_data=Xts_filtered,

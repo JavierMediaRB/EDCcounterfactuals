@@ -178,15 +178,22 @@ class Basic_MLP(torch.nn.Module):
 
         return y_pred
 
-    def predict_class_2_output(self, x_input):
+    def predict_class_2_output(self, x_input: torch.Tensor):
         """
-        TODO: ...
+        Evaluates the Neural Network on the 'x_input' variables and predict the decision using as frontier the value 0.0
+        The possible predictions are [0, 1], not [-1, 1]. This function also outputs this predictions as a 2 dimensional
+        output, one for each class.
+
+        [Warning]: The code is only adapted to binary classification when the labels are [-1, +1], specifically the
+                   input data, MUST have label '-1' for the mayority class, and '+1' for the minority class.
 
         Args:
+            x_input (torch.Tensor): The input samples to evaluate the Neural Network.
 
         Returns:
-
+            res (numpy.ndarray): The decisions of the x_input samples into a 2 dim format.
         """
+
         frontera = 0.0
         o = self.forward(x_input=x_input).detach().flatten().numpy()
         y_pred = o > frontera

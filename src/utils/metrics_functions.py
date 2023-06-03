@@ -12,34 +12,56 @@ def compute_probabilistic_cost_for_class(cost_mat: numpy.ndarray,
                                          oposite_class: int = 1,
                                          ) -> typing.Tuple[pandas.DataFrame, typing.Dict[str, object]]:
     """
-    TODO: Description...
+    Compute the probabilistic costs for the samples that match a given objetve class and optisite class.
+
+    This compute the probabilistic costs for original and counterfactual samples. When searching from counterfactuals
+    the objetive is to find a sample that classify as the oposite class from the originally predicted class. Therefore,
+    in this function we call "oposite class" to the counterfactual class, i.e., if the original class is 0, the
+    objetive class will be 1.
+
+    This functions also computes the costs for the dummy coutnerfactuals, with are the result of directly switch the
+    predicted class with no perturbation fo the original sample. This will produce a high cost counterfactulas that are
+    used as benchmarking. As the position of this counterfactuals are the same as the original samples we know the
+    resulting true labes, so we could compute the true cost of the decission for that samples, not just the
+    probabilistic ones.
+
+    The process have the following steps:
+        1. Filter the samples that are failures and success of finding the specified counterfacual flip (indicated with
+           objetive_class, and oposite_class values).
+        2. Computes the true costs for the original and dummy counterfactual samples.
+        3. Computes the probabilistic costs for the method counterfactual samples. As the position of the counterfactual
+           sample is not the same as the original sample, we dont know the we dont know the true labels, so the costs
+           of the decisions must be computed based on the probabilies.
 
     [Warning]: The code is only adapted to binary classification when the labels are [-1, +1], specifically the input
                data, MUST have label '-1' for the mayority class, and '+1' for the minority class. Also, this fucntion
                expect probabilities as input, i.e., probabilities as float in the range [0, 1].
 
     Args:
-        cost_mat (numpy.ndarray):
-        prob_objetive_counter (numpy.ndarray):
-        prob_objetive_orig (numpy.ndarray):
-        y_pred_orig (numpy.ndarray):
-        y_true (numpy.ndarray):
-        objetive_class (int): Default to -1.
-        oposite_class (int): Default to +1.
+        cost_mat (numpy.ndarray): The example-dependent cost matrix for each sample.
+        prob_objetive_counter (numpy.ndarray): Probability of the objetive class for the original sample.
+        prob_objetive_orig (numpy.ndarray): Probability of the objetive class for the counterfactual sample.
+        y_pred_orig (numpy.ndarray): The class prediction for the original sample.
+        y_true (numpy.ndarray): The true class for the original sample.
+        objetive_class (int): The objetive class. Default to -1.
+        oposite_class (int): The oposite class. Default to +1.
 
     Returns:
-        df_result ():
-            prob_cost_orig ():
-            prob_cost_counter_dummy ():
-            prob_cost_counter ():
+        df_result (pandas.DataFrame): A pandas.DataFrame containing the following variables:
+            prob_cost_orig (numpy.ndarray): The probabilistic cost for each original sample.
+            prob_cost_counter_dummy (numpy.ndarray): The probabilistic cost for each counterfactual (computed with the
+                                                     dummy method) sample.
+            prob_cost_counter (numpy.ndarray): The probabilistic cost for each counterfactual (computed with the
+                                               corresponding method to measure its performance) sample.
 
-        info ():
-            true_cost_orig ():
-            total_prob_cost_orig ():
-            true_cost_counter_dummy ():
-            total_prob_cost_counter_dummy ():
-            total_prob_cost_counter ():
+        info (typing.Dict[str, object]): A Dictionary containing the following variables:
+            true_cost_orig (float): The sum of the TRUE costs of the original samples.
+            total_prob_cost_orig (float): The sum of the PROBA costs of the original samples.
+            true_cost_counter_dummy (float): The sum of the TRUE costs of the counter samples.
+            total_prob_cost_counter_dummy (float): The sum of the PORBA costs of the dummy counter samples.
+            total_prob_cost_counter (float): The sum of the PROBA costs of the counter samples.
     """
+
     str_objetive_class = str(int((objetive_class + 1) / 2))
     str_oposite_class = str(int((oposite_class + 1) / 2))
 
@@ -71,6 +93,7 @@ def compute_probabilistic_cost_for_class(cost_mat: numpy.ndarray,
                  'prob_cost_counter_dummy': prob_cost_counter_dummy,
                  'prob_cost_counter': prob_cost_counter,
                  }
+    df_result = pandas.DataFrame(df_result)
 
     info = {'true_cost_orig': true_cost_orig,
             'total_prob_cost_orig': total_prob_cost_orig,
@@ -79,7 +102,6 @@ def compute_probabilistic_cost_for_class(cost_mat: numpy.ndarray,
             'total_prob_cost_counter': total_prob_cost_counter
             }
 
-    df_result = pandas.DataFrame(df_result)
     return df_result, info
 
 
@@ -92,35 +114,45 @@ def compute_probabilistic_cost(cost_mat: numpy.ndarray,
                                zero_class: int = -1,
                                verbose: bool = True) -> pandas.DataFrame:
     """
-    TODO: Description...
+    Computes the probabilistic cost for a set of orginal, and counterfactual samples. Also computes the metrics for
+    the dummy counterfactuals.
+
+    The process have the following steps:
+        1. Comput the probabilistic costs for all the samples depending on the original predicted label. Therefore,
+           the function 'compute_probabilistic_cost_for_class' is called 2 times, one per "oposite class" option (binary
+           classification problem).
+        2. Merge and sum the costs results of both "oposite class" options.
+        3. If Verbose is True prints some usefull information of the resulting metrics.
 
     [Warning]: The code is only adapted to binary classification when the labels are [-1, +1], specifically the input
                data, MUST have label '-1' for the mayority class, and '+1' for the minority class. Also, this fucntion
                expect probabilities as input, i.e., probabilities as float in the range [0, 1].
                The probability is understood as the prob of a sample belonging to class 1, that is, the minority class.
     Args:
-        cost_mat (numpy.ndarray):
-        pred_prob_counter (numpy.ndarray):
-        pred_prob_orig (numpy.ndarray):
-        y_pred_orig (numpy.ndarray):
-        y_true (numpy.ndarray):
-        one_class (int): Default to 1.
-        zero_class (int): Defatul to 0.
-        verbose (bool): Defatult to True.
+        cost_mat (numpy.ndarray): The example-dependent cost matrix for each sample.
+        pred_prob_counter (numpy.ndarray): The probability of the minoritary class for each counterfactual sample.
+        pred_prob_orig (numpy.ndarray): The probability of the minoritary class for each original sample.
+        y_pred_orig (numpy.ndarray): The predicted class of the original samples.
+        y_true_orig (numpy.ndarray): The true label for each orignal sample.
+        one_class (int): The label corresponding to the minoritary class. Default to 1.
+        zero_class (int): The label corresponding to the mayoritary class.  Defatul to 0.
+        verbose (bool): If True prints the resulting metrics for the original and conterfactual an ddummy counterfactual
+                        samples. Defatult to True.
 
     Returns:
         result (pandas.DataFrame):
-            pred_prob_orig ():
-            pred_prob_counter ():
-            y_true ():
-            y_pred_orig ():
-            c11_orig ():
-            c00_orig ():
-            c10_orig ():
-            c01_orig ():
-            prob_cost_orig ():
-            prob_cost_counter_dummy ():
-            prob_cost_counter_proposed ():
+            pred_prob_orig (numpy.ndarray): The input probability of the minoritary class for each original sample.
+            pred_prob_counter (numpy.ndarray): The input probability of the minoritary class for each counterfactual
+                                               sample.
+            y_pred_orig (numpy.ndarray): The input predicted class of the original samples.
+            y_true_orig (numpy.ndarray): The input true label for each orignal sample.
+            c11_orig (numpy.ndarray): The cost c11 for the original samples.
+            c00_orig (numpy.ndarray): The cost c00 for the original samples.
+            c10_orig (numpy.ndarray): The cost c10 for the original samples.
+            c01_orig (numpy.ndarray): The cost c01 for the original samples.
+            prob_cost_orig (numpy.ndarray): The merged probabilistic cost for each original sample.
+            prob_cost_counter_dummy (numpy.ndarray): The merged probabilistic cost for each counter sample.
+            prob_cost_counter_proposed (numpy.ndarray): The merged probabilistic cost for each dummy counter sample.
     """
     df_result_class0, info_class0 = compute_probabilistic_cost_for_class(cost_mat=cost_mat,
                                                                          prob_objetive_counter=(1 - pred_prob_counter),
@@ -163,8 +195,8 @@ def compute_probabilistic_cost(cost_mat: numpy.ndarray,
 
     result = {'pred_prob_orig': pred_prob_orig,
               'pred_prob_counter': pred_prob_counter,
-              'y_true_orig': y_true_orig,
               'y_pred_orig': y_pred_orig,
+              'y_true_orig': y_true_orig,
               'c11_orig': cost_mat["orig_c11"],
               'c00_orig': cost_mat["orig_c00"],
               'c10_orig': cost_mat["orig_c10"],
@@ -185,24 +217,38 @@ def compute_metrics(method_name_list: typing.List[str],
                     verbose: bool = False,
                     ) -> typing.Dict[str, typing.Dict[str, float]]:
     """
-    TODO: Description...
+    Compute all the metrics for all the specified datasets and counterfactual methods in the input lists.
+
+    The process have the following steps for each dataset and counterfactual method specified in the input lists :
+        1. Load the precomputed counterfactual results.
+        2. Filter the samples that are originally predicted as minoritary class.
+        3. Call the function 'compute_probabilistic_cost' to compute the probabilistic costs.
+        4. Compute the rest of the metrics:
+                - The Probabilistic savings (based on the probabilistic costs)
+                - The success ratio (proporton of samples that meet the objetive of the counterfactual search): For
+                  traditional counterfactual methods is to find a sample thar flips the decission and for the
+                  cost counterfactual methods, as the proposed, is to find a counterfactual sample that flips the
+                  bayes cost-based decision.
+                - The distance between the original and counterfactual sample
 
     [Warning]: The code is only adapted to binary classification when the labels are [-1, +1], specifically the input
                data, MUST have label '-1' for the mayority class, and '+1' for the minority class. Also, this fucntion
                expect to load probabilities results, i.e., probabilities as float in the range [0, 1].
                The probability is understood as the prob of a sample belonging to class 1, that is, the minority class.
 
-
     Args:
-        method_name_list (typing.List[str]):
-        dataset_name_list (typing.List[str]):
-        load_experiments_path (str):
-        verbose (bool):  Default to False.
+        method_name_list (typing.List[str]): The list of the names of the counterfactual methods to compute its
+                                             performance.
+        dataset_name_list (typing.List[str]): The list of the names of the datasets to compute its performance.
+        load_experiments_path (str): The path where to find the precomputed counterfactual results for each method and
+                                     dataset.
+        verbose (bool): If True prints the results of the computed metrics. Default to False.
+
     Returns:
-        global_mean_distance ():
-        global_succeed_ratio ():
-        global_counter_savings ():
-        global_results_dict ():
+        global_mean_distance (typing.Dict[str, float]): The global mean distance metric.
+        global_succeed_ratio (typing.Dict[str, float]): The global succeed ratio metric.
+        global_counter_savings (typing.Dict[str, float]): The global counter savings metric.
+        global_results_dict (typing.Dict[str, float]): All the results from the 'compute_probabilistic_cost' function.
     """
     global_results_dict = {}
     global_counter_savings = {}
@@ -231,7 +277,6 @@ def compute_metrics(method_name_list: typing.List[str],
             y_pred_orig_samples = load_file.item()['y_pred_original_samples']
             counter_samples = load_file.item()['counterfactual_samples']
             o_counter_samples = load_file.item()['o_counterfactual_samples']
-            # y_pred_counter_samples = load_file.item()['y_pred_counterfactual_samples']
             cost_mat = load_file.item()['cost_matrix']
             y_true_orig_samples = load_file.item()['y_true_orignal_samples']
             if model_name == 'Proposed':
@@ -249,6 +294,7 @@ def compute_metrics(method_name_list: typing.List[str],
             # ######################################## #
 
             # ########## Measure cost impact ########## #
+            # [WARNING]: The values of o_counter_samples must be in the range [-1, 1]
             pred_prob_counter = (o_counter_samples.detach().flatten().numpy() + 1) / 2
             pred_prob_orig = (o_orig_samples.detach().flatten().numpy() + 1) / 2
             results = compute_probabilistic_cost(cost_mat=cost_mat,
@@ -261,7 +307,7 @@ def compute_metrics(method_name_list: typing.List[str],
                                                  verbose=verbose)
 
             # Add y_pred_counter variable
-            pred_class_0_1 = (results['pred_prob_counter'] >= 0.5) * 1  # TODO: Esto solo está bien si TODOS los metodos dan o in[-1, 1] y por tanto al combertir tengo prob in[0, 1]
+            pred_class_0_1 = (results['pred_prob_counter'] >= 0.5) * 1
 
             # To convert the output model [-1, 1] into probability rante [0, 1]
             results['y_pred_counter'] = (pred_class_0_1 * 2) - 1
@@ -269,8 +315,8 @@ def compute_metrics(method_name_list: typing.List[str],
 
             # ################ Final metrics ################ #
             # #### Counter Savings #### #
-            cost_dummy = results['prob_cost_counter_dummy'].sum()  # El mismo dummy para todos los benchmarks
-            cost_model = results['prob_cost_counter_proposed'].sum()  # El coste de las deciones de cada modelo testado
+            cost_dummy = results['prob_cost_counter_dummy'].sum()  # The same dummy for all the benchmarks and proposed.
+            cost_model = results['prob_cost_counter_proposed'].sum()  # The cost of the decisions of each tested model.
             dataset_counter_savings = cost_dummy / (cost_model + cost_dummy)
             # ######################### #
 

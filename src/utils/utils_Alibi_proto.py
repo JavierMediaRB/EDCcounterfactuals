@@ -18,43 +18,67 @@ def search_counterfactuals_Alibi_Proto(name_dataset: str,
                                        small_test: bool = False
                                        ) -> typing.Dict[str, object]:
     """
-    ... TODO...
+    This function performs the pipeline process to generate a set of counterfactual samples for the Prototipes method.
+    The process have the following consecutive steps:
+
+        1. Load the needed params for the experiment
+        2. Load the data from the variable 'loaded_dataset'
+        3. Set the optimization restrictions (if aplicable)
+        4. Compute an initial prediction on the test data with the 'NN_model' model to select only the
+           samples that are originally predicted in the minoritary class.
+        5. If the param 'small_test' is True, select just the first 2 samples to reduce the computational cost. This is
+           usefull to debug the code if necessary.
+        6. With a for loop perform the searching of counterfactuals sample by sample, by using the Alibi library.
+        7. Compute some aditional variables like the costs of the founded counterfactual sample, and store them.
 
     [Warning]: Part of the function returns are probabilies. In this code, the probability is understood as the prob of
                a sample belonging to class 1, that is, the minority class.
+
     Args:
-        name_dataset (str):
-        loaded_dataset (typing.Dict[str, object]):
-        params (typing.Dict[str, object]):
-        figure (bool):
+        name_dataset (str): The name of the dataset to access to the conf params
+        NN_model (Basic_MLP): A NN model from the class Basic_MLP.
+        loaded_dataset (typing.Dict[str, object]): A dictionary containing the dataset data with the variables:
+                                                     - 'tensor_x_ts': tensor_x_ts,
+                                                     - 'tensor_y_ts': tensor_y_ts,
+                                                     - 'tensor_Cs01': tensor_Cs01,
+                                                     - 'tensor_Cs10': tensor_Cs10,
+                                                     - 'tensor_Cs11': tensor_Cs11,
+                                                     - 'tensor_Cs00': tensor_Cs00,
+                                                     - 'tensor_x_tr': tensor_x_tr,
+                                                     - 'tensor_y_tr': tensor_y_tr,
+                                                     - 'tensor_Cr01': tensor_Cr01,
+                                                     - 'tensor_Cr10': tensor_Cr10,
+                                                     - 'tensor_Cr11': tensor_Cr11,
+                                                     - 'tensor_Cr00': tensor_Cr00,
+                                                     - 'IR_tr': IR_tr,
+                                                     - 'mean_tr': mean_tr,
+                                                     - 'std_tr': std_tr,
+        params (typing.Dict[str, object]): Contais the parameters that might be needed for the process. Defatul to {}.
+        figure (bool): In this function is useless. We keep this variable to maintain a common code structure for all
+                       the counterfactual methods.
         verbose (int): Depending on the number diferent level information is printed.
                        [0: no prints; 1: high level information; 2: full detail]. Default to 1.
-        small_test (bool): If True, the test data will be croped in order to reduce the computational cost of the
-                           experiments for debugging processes.
+        small_test (bool): If True, the samples used to compute the counterfactuals are reduced to 2. In orther to
+                           reduce the computational cost to debug the code. Defatul to False.
 
     Returns:
-        Xts_filtered ():
-        lr_reg ():
-        o_pred_orig ():
-        y_pred_original ():
-        list_counter_samples ()
-        o_pred_counter ():
-        y_pred_counter ():
-        cost_matrix ():
-        Yts_filtered ():
-        success_vars ():
-            list_discriminant_final ():
-            list_g_final ():
-            list_f_final ():
-            list_g_inicial ():
-            list_f_inicial ():
-
+        original_samples (numpy.ndarray): The Xts data only for the samples originally classified as the minoritary
+                                          class.
+        lr_regularization (float): The regularization used for the optimization process.
+        o_original_samples (torch.Tensor): The output of the model for the original samples.
+        y_pred_original_samples (numpy.ndarray): The predicted class of the model for the original samples.
+        counterfactual_samples (numpy.ndarray): Contains the computed counterfactual samples.
+        o_counterfactual_samples (torch.Tensor): The output of the model for the counterfactual samples.
+        y_pred_counterfactual_samples (numpy.ndarray): The predicted class of the model for the counterfactual samples.
+        cost_matrix (pandas.DataFrame): Contains the example-dependent costs for the original and counterfactual samples
+        y_true_orignal_samples (numpy.ndarray): The Yts data only for the samples originally classified as the
+                                                minoritary class.
     """
+
     if verbose > 0:
         print('\n[Process] START counterfactual search')
 
     # ######## loaded dataset ######## #
-    # TODO: No se si me gusta, ya que estoy obligando a esta forma de pasar el dato...
     tensor_x_ts = loaded_dataset['tensor_x_ts']
     tensor_y_ts = loaded_dataset['tensor_y_ts']
     tensor_x_tr = loaded_dataset['tensor_x_tr']
