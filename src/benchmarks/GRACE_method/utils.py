@@ -1,3 +1,20 @@
+"""
+This file contains a copy of some of the functions needed for use the GRACE method. This
+functions are an exact copy of the ones in the GRACE_KDD20 repository (https://github.com/lethaiq/GRACE_KDD20/tree/master). The only aim to
+copy these functions is to preserve the reproducibility of the experiments.
+
+References
+    ----------
+    @article{le2019grace,
+             title={GRACE: Generating Concise and Informative Contrastive Sample to Explain Neural Network Model's Prediction},
+             author={Thai Le and Suhang Wang and Dongwon Lee},
+             year={2019},
+             journal={Proceedings of the 26th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD '20)},
+             doi={10.1145/3394486.3403066}
+             isbn={978-1-4503-7998-4/20/08}
+             }
+"""
+
 import numpy as np
 import pandas as pd
 
