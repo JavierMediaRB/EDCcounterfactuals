@@ -1,6 +1,8 @@
 import pandas
 import numpy
+import sklearn.neighbors
 import typing
+from src.utils.load_data import load_data
 
 
 def compute_probabilistic_cost_for_class(cost_mat: numpy.ndarray,
@@ -15,9 +17,9 @@ def compute_probabilistic_cost_for_class(cost_mat: numpy.ndarray,
     Compute the probabilistic costs for the samples that match a given objetve class and optisite class.
 
     This compute the probabilistic costs for original and counterfactual samples. When searching from counterfactuals
-    the objetive is to find a sample that classify as the oposite class from the originally predicted class. Therefore,
-    in this function we call "oposite class" to the counterfactual class, i.e., if the original class is 0, the
-    objetive class will be 1.
+    the objetive is to find a sample that classify as the oposite class from the originally predicted class
+    (objetive_class). Therefore, in this function we call "oposite class" to the counterfactual class, i.e., if the
+    original class (objetive_class) is 0, the objetive class will be 1.
 
     This functions also computes the costs for the dummy coutnerfactuals, with are the result of directly switch the
     predicted class with no perturbation fo the original sample. This will produce a high cost counterfactulas that are
@@ -83,10 +85,10 @@ def compute_probabilistic_cost_for_class(cost_mat: numpy.ndarray,
     total_prob_cost_counter_dummy = prob_cost_counter_dummy[filter_objetive_class_samples].sum()
 
     key_columns = 'counter'
-    key1 = f"{key_columns}_c{str_oposite_class}{str_objetive_class}"
-    key2 = f"{key_columns}_c{str_oposite_class}{str_oposite_class}"
+    key3 = f"{key_columns}_c{str_oposite_class}{str_oposite_class}"
+    key4 = f"{key_columns}_c{str_oposite_class}{str_objetive_class}"
 
-    prob_cost_counter = prob_objetive_counter * cost_mat[key1] + (1 - prob_objetive_counter) * cost_mat[key2]
+    prob_cost_counter = prob_objetive_counter * cost_mat[key4] + (1 - prob_objetive_counter) * cost_mat[key3]
     total_prob_cost_counter = prob_cost_counter[filter_objetive_class_samples].sum()
 
     df_result = {'prob_cost_orig': prob_cost_orig,
@@ -230,6 +232,9 @@ def compute_metrics(method_name_list: typing.List[str],
                   cost counterfactual methods, as the proposed, is to find a counterfactual sample that flips the
                   bayes cost-based decision.
                 - The distance between the original and counterfactual sample
+                - The distance between the counterfactual and the nearest plausible sample. The set of plausible
+                  samples are the original samples belonging to the 0 class. That means plausible "states" for a
+                  real world sample.
 
     [Warning]: The code is only adapted to binary classification when the labels are [-1, +1], specifically the input
                data, MUST have label '-1' for the mayority class, and '+1' for the minority class. Also, this fucntion
@@ -245,7 +250,10 @@ def compute_metrics(method_name_list: typing.List[str],
         verbose (bool): If True prints the results of the computed metrics. Default to False.
 
     Returns:
-        global_mean_distance (typing.Dict[str, float]): The global mean distance metric.
+        global_mean_plsusible_distance (typing.Dict[str, float]): The global mean distance metric between the
+                                                                  counterfactual to the nearest plausible sample.
+        global_mean_orgi_distance (typing.Dict[str, float]): The global mean distance metric from counterfactual to the
+                                                             orginal sample.
         global_succeed_ratio (typing.Dict[str, float]): The global succeed ratio metric.
         global_counter_savings (typing.Dict[str, float]): The global counter savings metric.
         global_results_dict (typing.Dict[str, float]): All the results from the 'compute_probabilistic_cost' function.
@@ -253,7 +261,8 @@ def compute_metrics(method_name_list: typing.List[str],
     global_results_dict = {}
     global_counter_savings = {}
     global_succeed_ratio = {}
-    global_mean_distance = {}
+    global_mean_orig_distance = {}
+    global_mean_plausible_distance = {}
     for index_model in range(len(method_name_list)):
         model_name = method_name_list[index_model]
         path_save_counter = f"{load_experiments_path}/{model_name}/"
@@ -261,8 +270,19 @@ def compute_metrics(method_name_list: typing.List[str],
         model_results_dict = {}
         counter_savings = {}
         succeed_ratio = {}
-        mean_distance = {}
+        mean_orig_distance = {}
+        mean_plausible_distance = {}
         for name_dataset in dataset_name_list:
+
+            # ######## Load orginal dataset ######## #
+            path_data = "../data/datasets/"
+            loaded_dataset = load_data(name_dataset=name_dataset,
+                                       path_data=path_data,
+                                       verbose=verbose)
+
+            x_ts = loaded_dataset['tensor_x_ts']
+            y_ts = loaded_dataset['tensor_y_ts']
+            # ###################################### #
 
             # ### Load counterfactual search results ### #
             if verbose:
@@ -317,7 +337,7 @@ def compute_metrics(method_name_list: typing.List[str],
             # #### Counter Savings #### #
             cost_dummy = results['prob_cost_counter_dummy'].sum()  # The same dummy for all the benchmarks and proposed.
             cost_model = results['prob_cost_counter_proposed'].sum()  # The cost of the decisions of each tested model.
-            dataset_counter_savings = cost_dummy / (cost_model + cost_dummy)
+            dataset_counter_savings = (cost_dummy - cost_model) / cost_dummy  # cost_dummy / (cost_model + cost_dummy)
             # ######################### #
 
             # #### Succeed ratio #### #
@@ -348,24 +368,40 @@ def compute_metrics(method_name_list: typing.List[str],
                 dataset_succeed_ratio = (len(results) - num_fails) / len(results)
             # ####################### #
 
-            # Distance counter-orig
-            dataset_mean_distance = numpy.sqrt(((counter_samples - orig_samples)**2).sum(axis=1)).mean()
+            # # Distance counter-orig # #
+            dataset_mean_orig_distance = numpy.sqrt(((counter_samples - orig_samples)**2).sum(axis=1)).mean()
+            dataset_std_orig_distance = numpy.sqrt(((counter_samples - orig_samples)**2).sum(axis=1)).std()
+            # ######################### #
+
+            # # Distance counter-nearest_plausible # #
+            orgi_samples_class_0 = x_ts[y_ts == -1]
+            neigh = sklearn.neighbors.NearestNeighbors(n_neighbors=1)
+            neigh.fit(X=orgi_samples_class_0)
+            neigh_dist, neigh_ind = neigh.kneighbors(X=counter_samples)
+            dataset_mean_plausible_distance = neigh_dist.mean()
+            dataset_std_plausible_distance = neigh_dist.std()
+            # ###################################### #
 
             if verbose:
                 print(f"The counterfactual savings: {counter_savings} for {name_dataset} dataset ")
             # ############################################## #
 
-            mean_distance[name_dataset] = numpy.round(dataset_mean_distance, 2)
+            mean_plausible_distance[name_dataset] = (str(numpy.round(dataset_mean_plausible_distance, 2)) + u" \u00B1 "
+                                                     + str(numpy.round(dataset_std_plausible_distance, 2)))
+            mean_orig_distance[name_dataset] = (str(numpy.round(dataset_mean_orig_distance, 2)) + u" \u00B1 "
+                                                + str(numpy.round(dataset_std_orig_distance, 2)))
             succeed_ratio[name_dataset] = numpy.round(dataset_succeed_ratio * 100, 2)
             counter_savings[name_dataset] = numpy.round(dataset_counter_savings * 100, 2)
             model_results_dict[name_dataset] = results
 
-        global_mean_distance[model_name] = mean_distance
+        global_mean_plausible_distance[model_name] = mean_plausible_distance
+        global_mean_orig_distance[model_name] = mean_orig_distance
         global_succeed_ratio[model_name] = succeed_ratio
         global_counter_savings[model_name] = counter_savings
         global_results_dict[model_name] = model_results_dict
 
-        final_results = {'global_mean_distance': global_mean_distance,
+        final_results = {'global_mean_plausible_distance': global_mean_plausible_distance,
+                         'global_mean_orig_distance': global_mean_orig_distance,
                          'global_succeed_ratio': global_succeed_ratio,
                          'global_counter_savings': global_counter_savings,
                          'global_results_dict': global_results_dict}
