@@ -25,7 +25,7 @@ import torch as torch
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from torch.autograd import Variable
-from torch.autograd.gradcheck import zero_gradients
+from src.benchmarks.GRACE_method.utils import zero_gradients
 
 def mask_r(r, idx, shape):
     rt = np.zeros(shape)

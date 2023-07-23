@@ -1,12 +1,11 @@
 # [WARNING]: This file contains the packages requirements for the Alibi CEM and Prototipe benchmarks methods.
 # [WARNING]: The installation must be performed on an empty envirionment with an installation of Python==3.8.16
+ipykernel==6.15.0
+matplotlib==3.7.1
 numpy==1.24.3
 pandas==1.4.2
-matplotlib==3.7.1
-torch==1.8.1
-ipykernel==6.15.0
-PyYAML==6.0
-tqdm==4.65.0
-ipykernel==6.15.0
+PyYAML==6.0.1
 scikit-learn==1.0.2
 texttable==1.6.4
+torch==1.9.0
+tqdm==4.65.0

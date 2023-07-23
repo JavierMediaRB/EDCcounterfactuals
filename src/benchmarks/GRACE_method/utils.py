@@ -17,6 +17,7 @@ References
 
 import numpy as np
 import pandas as pd
+import torch
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -152,4 +153,8 @@ def read_data(file, seed=77, scaler=False, test_split=0.1, validation_split=0.1)
 
     return scaler, le, x, y, features, train_data, val_data, test_data
 
-
+def zero_gradients(x):
+    if isinstance(x, torch.Tensor):
+        if x.grad is not None:
+            x.grad.detach_()
+            x.grad.zero_()
