@@ -342,8 +342,9 @@ def compute_metrics(method_name_list: typing.List[str],
 
             # #### Succeed ratio #### #
             if model_name == 'Proposed':
-                eps_success = 0.3
+                eps_cost_objetive_function = 0.3
 
+                ### cost boundary Succed Ratio ###
                 if name_dataset == 'CS2':
                     margen_nu = -0.5
                 else:
@@ -354,18 +355,25 @@ def compute_metrics(method_name_list: typing.List[str],
                 list_f_final = success_vars['list_f_final']
                 list_g_inicial = success_vars['list_g_inicial']
                 list_f_inicial = success_vars['list_f_inicial']
-                # list_success = success_vars['list_success']
 
-                cond1 = (numpy.abs(numpy.array(list_d_final) + margen_nu) <= eps_success)
-                cond2 = (numpy.abs(list_g_final) > eps_success)
-                cond3 = (numpy.abs(list_f_final) > eps_success)
-                cond4 = ((numpy.abs(list_f_inicial) < eps_success) * (numpy.abs(list_g_inicial) < eps_success))
+                # Compute if the counterfactual cross the cost boundary, or equivalently,
+                # minimize the objetive function with a tolerance.
+                cond1 = (numpy.abs(numpy.array(list_d_final) + margen_nu) <= eps_cost_objetive_function)
+                cond2 = (numpy.abs(list_g_final) > eps_cost_objetive_function)
+                cond3 = (numpy.abs(list_f_final) > eps_cost_objetive_function)
+                cond4 = ((numpy.abs(list_f_inicial) < eps_cost_objetive_function) * (numpy.abs(list_g_inicial) < eps_cost_objetive_function))
 
                 success = cond1 * (cond2 + cond3 + cond4)
                 dataset_succeed_ratio = success.mean()
+                ##################################
+
             else:
-                num_fails = (results['y_pred_counter'] == 1).sum()
+                ### Prob boundary Succed Ratio ###
+                eps_prob_boundary = 0.05
+                pred_class_0_1 = (results['pred_prob_counter'] >= 0.5) * 1
+                num_fails = (pred_class_0_1 == 1).sum()
                 dataset_succeed_ratio = (len(results) - num_fails) / len(results)
+                ##################################
             # ####################### #
 
             # # Distance counter-orig # #

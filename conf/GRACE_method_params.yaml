@@ -49,7 +49,7 @@
                 NN: 10,
                 lr: 0.001, # Default lr
                 gen_gamma: 0.0,
-                gen_max_features: 10,
+                gen_max_features: 5,
                 gen_max_iter: 250,
                 gen_overshoot: -0.6,
                 explain_units: "%",
