@@ -11,7 +11,7 @@ import torch
 import typing
 
 
-class explainable_NN(torch.nn.Module):
+class cocoa_NN(torch.nn.Module):
     """
     This class implements tools to find the counterfactual samples on the decissions of a Neural Network classifier
     implemented in pytorch. The expected procedure is as follows:
@@ -54,7 +54,7 @@ class explainable_NN(torch.nn.Module):
             n_out (int): The number of outputs of the Neural Network. Default to 1.
         """
 
-        super(explainable_NN, self).__init__()
+        super(cocoa_NN, self).__init__()
 
         self.eps = 0.000000000000001  # Used in ratios for numerical stability.
         self.n_out = n_out
@@ -63,7 +63,7 @@ class explainable_NN(torch.nn.Module):
 
         # Function to initilice the weights.
         def init_weights(m) -> None:
-            if type(m) == torch.nn.Linear:
+            if type(m) is torch.nn.Linear:
                 torch.nn.init.xavier_uniform_(m.weight)
 
         # First, declarating the conections of the layer
@@ -366,25 +366,25 @@ class explainable_NN(torch.nn.Module):
             if dimensions_restrictions[ii] == 0:
                 self.explainable_sample.grad[ii] = 0
 
-    def explica_muestra(self,
-                        input_sample: torch.Tensor,
-                        mean_tr: numpy.ndarray,
-                        std_tr: numpy.ndarray,
-                        lr_for_regularization: float,
-                        lr_for_discriminant: float,
-                        epochs: int,
-                        cost_policy_function: typing.Callable,
-                        RB: float,
-                        IR: float,
-                        dimensions_restrictions: numpy.ndarray,
-                        margen_nu: float,
-                        convergence_criteria: float,
-                        convergence_criteria_reg: float,
-                        regularzation_frontier: float = 0.9,
-                        extra_params: typing.Dict[str, object] = {},
-                        zero_grad_regularization: bool = False,
-                        figure: bool = False,
-                        verbose: int = 1) -> typing.Dict[str, torch.Tensor]:
+    def explain_sample(self,
+                       input_sample: torch.Tensor,
+                       mean_tr: numpy.ndarray,
+                       std_tr: numpy.ndarray,
+                       lr_for_regularization: float,
+                       lr_for_discriminant: float,
+                       epochs: int,
+                       cost_policy_function: typing.Callable,
+                       RB: float,
+                       IR: float,
+                       dimensions_restrictions: numpy.ndarray,
+                       threshold_nu: float,
+                       convergence_criteria: float,
+                       convergence_criteria_reg: float,
+                       regularzation_frontier: float = 0.9,
+                       extra_params: typing.Dict[str, object] = {},
+                       zero_grad_regularization: bool = False,
+                       figure: bool = False,
+                       verbose: int = 1) -> typing.Dict[str, torch.Tensor]:
         """
         This function search a counterfactual sample for the specified 'input_sample'. The process is as follows:
             1. Previously during the innit the model has been initilized with pretrained weights and then turned off
@@ -429,7 +429,7 @@ class explainable_NN(torch.nn.Module):
             dimensions_restrictions (numpy.ndarray): The restrictions on witch dimensions can almacenate gradients and
                                                      consequently change its value during the counterfactual searching
                                                      process.
-            margen_nu (float): The extra margin when minimizing the Bayes discriminant to find a counterfactual.
+            threshold_nu (float): The extra margin when minimizing the Bayes discriminant to find a counterfactual.
             convergence_criteria (float): The minimal error to consider that a optimization process has reached the
                                           objetive during the counterfactual optimization.
             convergence_criteria_regularization (float): The minimal error to consider that a optimization process
@@ -524,7 +524,7 @@ class explainable_NN(torch.nn.Module):
                 f_list.append(f.double().detach().numpy())
                 g_list.append(g.double().detach().numpy())
                 optim.param_groups[0]['lr'] = float(lr_for_discriminant / lr_reg)
-            error = (d + margen_nu)**2
+            error = (d + threshold_nu)**2
             error.backward()
 
             # #### Saving control variables #### #
