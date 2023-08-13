@@ -4,7 +4,7 @@ import typing
 from src.cost_policy.functions_from_costcla_repository import _creditscoring_costmat, _creditscoring_costmat_pytorch
 
 
-def funcion_costes_numpy(name_dataset: str,
+def cost_function_numpy(name_dataset: str,
                          x_input: numpy.ndarray,
                          mean_tr: numpy.ndarray,
                          std_tr: numpy.ndarray,
@@ -143,7 +143,7 @@ def funcion_costes_numpy(name_dataset: str,
     return result
 
 
-def funcion_costes_torch(name_dataset: str,
+def cost_function_torch(name_dataset: str,
                          x_input: torch.Tensor,
                          mean_tr: numpy.ndarray,
                          std_tr: numpy.ndarray,

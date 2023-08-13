@@ -1,4 +1,4 @@
-# [WARNING]: This file contains the packages requirements for the Alibi CEM and Prototipe benchmarks methods.
+# [WARNING]: This file contains the packages requirements for the GRACE benchmark method.
 # [WARNING]: The installation must be performed on an empty envirionment with an installation of Python==3.8.16
 ipykernel==6.15.0
 matplotlib==3.7.1

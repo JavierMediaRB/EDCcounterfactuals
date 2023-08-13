@@ -2,6 +2,7 @@ import pandas
 import numpy
 import sklearn.neighbors
 import typing
+import yaml
 from src.utils.load_data import load_data
 
 
@@ -228,8 +229,8 @@ def compute_metrics(method_name_list: typing.List[str],
         4. Compute the rest of the metrics:
                 - The Probabilistic savings (based on the probabilistic costs)
                 - The success ratio (proporton of samples that meet the objetive of the counterfactual search): For
-                  traditional counterfactual methods is to find a sample thar flips the decission and for the
-                  cost counterfactual methods, as the proposed, is to find a counterfactual sample that flips the
+                  traditional counterfactual methods is to find a sample tha flips the decission and for the
+                  cost counterfactual methods, as the COCOA, is to find a counterfactual sample that flips the
                   bayes cost-based decision.
                 - The distance between the original and counterfactual sample
                 - The distance between the counterfactual and the nearest plausible sample. The set of plausible
@@ -299,7 +300,7 @@ def compute_metrics(method_name_list: typing.List[str],
             o_counter_samples = load_file.item()['o_counterfactual_samples']
             cost_mat = load_file.item()['cost_matrix']
             y_true_orig_samples = load_file.item()['y_true_orignal_samples']
-            if model_name == 'Proposed':
+            if model_name == 'COCOA':
                 success_vars = load_file.item()['success_vars']
             # ########################################## #
 
@@ -335,20 +336,19 @@ def compute_metrics(method_name_list: typing.List[str],
 
             # ################ Final metrics ################ #
             # #### Counter Savings #### #
-            cost_dummy = results['prob_cost_counter_dummy'].sum()  # The same dummy for all the benchmarks and proposed.
+            cost_dummy = results['prob_cost_counter_dummy'].sum()  # The same dummy for all the benchmarks and COCOA.
             cost_model = results['prob_cost_counter_proposed'].sum()  # The cost of the decisions of each tested model.
             dataset_counter_savings = (cost_dummy - cost_model) / cost_dummy  # cost_dummy / (cost_model + cost_dummy)
             # ######################### #
 
             # #### Succeed ratio #### #
-            if model_name == 'Proposed':
-                eps_cost_objetive_function = 0.3
+            if model_name == 'COCOA':  ### cost boundary Succed Ratio ###
 
-                ### cost boundary Succed Ratio ###
-                if name_dataset == 'CS2':
-                    margen_nu = -0.5
-                else:
-                    margen_nu = 0.0
+                with open(f'../conf/{model_name}_method_params.yaml') as f:
+                    params = yaml.load(f, Loader=yaml.loader.SafeLoader)
+
+                threshold_nu = params[name_dataset]['threshold_nu']
+                eps_cost_objetive_function = params[name_dataset]['eps_cost_objetive_function']
 
                 list_d_final = success_vars['list_d_final']
                 list_g_final = success_vars['list_g_final']
@@ -358,7 +358,7 @@ def compute_metrics(method_name_list: typing.List[str],
 
                 # Compute if the counterfactual cross the cost boundary, or equivalently,
                 # minimize the objetive function with a tolerance.
-                cond1 = (numpy.abs(numpy.array(list_d_final) + margen_nu) <= eps_cost_objetive_function)
+                cond1 = (numpy.abs(numpy.array(list_d_final) + threshold_nu) <= eps_cost_objetive_function)
                 cond2 = (numpy.abs(list_g_final) > eps_cost_objetive_function)
                 cond3 = (numpy.abs(list_f_final) > eps_cost_objetive_function)
                 cond4 = ((numpy.abs(list_f_inicial) < eps_cost_objetive_function) * (numpy.abs(list_g_inicial) < eps_cost_objetive_function))
@@ -367,9 +367,8 @@ def compute_metrics(method_name_list: typing.List[str],
                 dataset_succeed_ratio = success.mean()
                 ##################################
 
-            else:
-                ### Prob boundary Succed Ratio ###
-                eps_prob_boundary = 0.05
+            else:  ### Prob boundary Succed Ratio ###
+                
                 pred_class_0_1 = (results['pred_prob_counter'] >= 0.5) * 1
                 num_fails = (pred_class_0_1 == 1).sum()
                 dataset_succeed_ratio = (len(results) - num_fails) / len(results)

@@ -3,12 +3,12 @@ import torch
 import tqdm
 import typing
 import pandas
-from src.cost_policy.cost_policy_for_datasets import funcion_costes_numpy, funcion_costes_torch
-from src.proposed_method.explainable_NN import explainable_NN
+from src.cost_policy.cost_policy_for_datasets import cost_function_numpy, cost_function_torch
+from src.cocoa_method.cocoa_NN import cocoa_NN
 
 
 def search_counterfactuals(name_dataset: str,
-                           explainable_NN_model: explainable_NN,
+                           cocoa_NN_model: cocoa_NN,
                            loaded_dataset: typing.Dict[str, object],
                            params: typing.Dict[str, object],
                            figure: bool = False,
@@ -16,7 +16,7 @@ def search_counterfactuals(name_dataset: str,
                            small_test: bool = False
                            ) -> typing.Dict[str, object]:
     """
-    This function performs the pipeline process to generate a set of counterfactual samples for the Proposed method.
+    This function performs the pipeline process to generate a set of counterfactual samples for the COCOA method.
     The process have the following consecutive steps:
 
         1. Load the needed params for the experiment
@@ -34,7 +34,7 @@ def search_counterfactuals(name_dataset: str,
 
     Args:
         name_dataset (str): The name of the dataset to access to the conf params
-        explainable_NN_model (explainable_NN): A NN model from the class explainable_NN.
+        cocoa_NN_model (explainable_NN): A NN model from the class explainable_NN.
         loaded_dataset (typing.Dict[str, object]): A dictionary containing the dataset data with the variables:
                                                      - 'tensor_x_ts': tensor_x_ts,
                                                      - 'tensor_y_ts': tensor_y_ts,
@@ -85,7 +85,7 @@ def search_counterfactuals(name_dataset: str,
     # ######## Params ######## #
     activate_movement_in_amount = params[name_dataset]['activate_movement_in_amount']
     epochs = params[name_dataset]['epochs']
-    margen_nu = params[name_dataset]['margen_nu']
+    threshold_nu = params[name_dataset]['threshold_nu']
     convergence_criteria = params[name_dataset]['convergence_criteria']
     convergence_criteria_reg = params[name_dataset]['convergence_criteria_reg']
     regularzation_frontier = params[name_dataset]['regularzation_frontier']
@@ -112,7 +112,7 @@ def search_counterfactuals(name_dataset: str,
     if verbose > 1:
         print('[Params Info] activate_movement_in_amount   = ', activate_movement_in_amount)
         print('[Params Info] epochs                        = ', epochs)
-        print('[Params Info] margen_nu                     = ', margen_nu)
+        print('[Params Info] threshold_nu                  = ', threshold_nu)
         print('[Params Info] convergence_criteria          = ', convergence_criteria)
         print('[Params Info] convergence_criteria_reg      = ', convergence_criteria_reg)
         print('[Params Info] regularzation_frontier        = ', regularzation_frontier)
@@ -125,7 +125,7 @@ def search_counterfactuals(name_dataset: str,
     key_orig = "orig"
 
     # ######### Initial prediction ######### #
-    y_pred_orig = explainable_NN_model.predict_class(x_input=tensor_x_ts).astype(int)
+    y_pred_orig = cocoa_NN_model.predict_class(x_input=tensor_x_ts).astype(int)
     tensor_x_ts_filtered = tensor_x_ts
     Xts_filtered = tensor_x_ts.detach().numpy().copy()
     Yts_filtered = tensor_y_ts.detach().numpy().copy()
@@ -164,24 +164,24 @@ def search_counterfactuals(name_dataset: str,
     list_f_initial = []
 
     for index_sample in tqdm.tqdm(range(n_samples)):
-        counter_search_result = explainable_NN_model.explica_muestra(input_sample=tensor_x_ts_filtered[index_sample, :],
-                                                                     mean_tr=mean_tr,
-                                                                     std_tr=std_tr,
-                                                                     lr_for_regularization=lr_for_regularization,
-                                                                     lr_for_discriminant=lr_for_discriminant,
-                                                                     epochs=epochs,
-                                                                     cost_policy_function=funcion_costes_torch,
-                                                                     RB=RB,
-                                                                     IR=IR_tr,
-                                                                     dimensions_restrictions=dimensiones,
-                                                                     margen_nu=margen_nu,
-                                                                     convergence_criteria=convergence_criteria,
-                                                                     convergence_criteria_reg=convergence_criteria_reg,
-                                                                     regularzation_frontier=regularzation_frontier,
-                                                                     extra_params=params[name_dataset]['extra_params'],
-                                                                     zero_grad_regularization=zero_grad_regularization,
-                                                                     figure=figure,
-                                                                     verbose=verbose)
+        counter_search_result = cocoa_NN_model.explain_sample(input_sample=tensor_x_ts_filtered[index_sample, :],
+                                                              mean_tr=mean_tr,
+                                                              std_tr=std_tr,
+                                                              lr_for_regularization=lr_for_regularization,
+                                                              lr_for_discriminant=lr_for_discriminant,
+                                                              epochs=epochs,
+                                                              cost_policy_function=cost_function_torch,
+                                                              RB=RB,
+                                                              IR=IR_tr,
+                                                              dimensions_restrictions=dimensiones,
+                                                              threshold_nu=threshold_nu,
+                                                              convergence_criteria=convergence_criteria,
+                                                              convergence_criteria_reg=convergence_criteria_reg,
+                                                              regularzation_frontier=regularzation_frontier,
+                                                              extra_params=params[name_dataset]['extra_params'],
+                                                              zero_grad_regularization=zero_grad_regularization,
+                                                              figure=figure,
+                                                              verbose=verbose)
 
         contrafactual_sample = counter_search_result['contrafactual_sample']
         final_epoch = counter_search_result['final_epoch']
@@ -209,16 +209,16 @@ def search_counterfactuals(name_dataset: str,
     list_counter_samples = numpy.array(list_counter_samples)
     tensor_counter_samples = torch.from_numpy(list_counter_samples)
 
-    o_pred_counter = explainable_NN_model.eval_samples(x_input=tensor_counter_samples)
-    y_pred_counter = explainable_NN_model.predict_class(x_input=torch.from_numpy(list_counter_samples).float())
+    o_pred_counter = cocoa_NN_model.eval_samples(x_input=tensor_counter_samples)
+    y_pred_counter = cocoa_NN_model.predict_class(x_input=torch.from_numpy(list_counter_samples).float())
     y_pred_counter = y_pred_counter.astype(int)
-    o_pred_orig = explainable_NN_model.eval_samples(x_input=tensor_x_ts_filtered)
-    y_pred_original = explainable_NN_model.predict_class(x_input=tensor_x_ts_filtered).astype(int)
+    o_pred_orig = cocoa_NN_model.eval_samples(x_input=tensor_x_ts_filtered)
+    y_pred_original = cocoa_NN_model.predict_class(x_input=tensor_x_ts_filtered).astype(int)
     # ########################################################################################### #
 
     # #### Compute the costs of the original and counterfactual sample #### #
     # #### counterfactual cost matrix #### #
-    counterfactual_cost_policy_result = funcion_costes_numpy(name_dataset=name_dataset,
+    counterfactual_cost_policy_result = cost_function_numpy(name_dataset=name_dataset,
                                                              x_input=list_counter_samples,
                                                              mean_tr=mean_tr,
                                                              std_tr=std_tr,
@@ -236,7 +236,7 @@ def search_counterfactuals(name_dataset: str,
     # #################################### #
 
     # #### original cost matrix #### #
-    original_cost_policy_result = funcion_costes_numpy(name_dataset=name_dataset,
+    original_cost_policy_result = cost_function_numpy(name_dataset=name_dataset,
                                                        x_input=list_orgi_samples,
                                                        mean_tr=mean_tr,
                                                        std_tr=std_tr,

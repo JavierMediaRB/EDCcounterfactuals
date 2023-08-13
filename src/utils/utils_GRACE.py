@@ -3,7 +3,7 @@ import torch
 import typing
 import pandas
 import matplotlib.pyplot
-from src.cost_policy.cost_policy_for_datasets import funcion_costes_numpy
+from src.cost_policy.cost_policy_for_datasets import cost_function_numpy
 from src.benchmarks.Basic_MLP import Basic_MLP
 from src.benchmarks.GRACE_method.main_args_parser import arguments
 from src.benchmarks.GRACE_method.utils import get_constraints
@@ -270,7 +270,7 @@ def search_counterfactuals_GRACE(name_dataset: str,
 
     # #### Compute the costs of the original and counterfactual sample #### #
     # #### counterfactual cost matrix #### #
-    counterfactual_cost_policy_result = funcion_costes_numpy(name_dataset=name_dataset,
+    counterfactual_cost_policy_result = cost_function_numpy(name_dataset=name_dataset,
                                                              x_input=list_counter_samples,
                                                              mean_tr=mean_tr,
                                                              std_tr=std_tr,
@@ -288,7 +288,7 @@ def search_counterfactuals_GRACE(name_dataset: str,
     # #################################### #
 
     # #### original cost matrix #### #
-    original_cost_policy_result = funcion_costes_numpy(name_dataset=name_dataset,
+    original_cost_policy_result = cost_function_numpy(name_dataset=name_dataset,
                                                        x_input=list_orgi_samples,
                                                        mean_tr=mean_tr,
                                                        std_tr=std_tr,
