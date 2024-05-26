@@ -195,6 +195,17 @@ The GRACE method (GeneRAting Contrastive samplEs) is focused on Neural Network m
 If you use the COCOA method in your research, please consider citing it.
 
 BibTeX entry:
+```
+@article{mediavilla2024cocoa,
+         title={COCOA: Cost-Optimized COunterfactuAl explanation method},
+         author={Mediavilla-Rela{\~n}o, Javier and L{\'a}zaro, Marcelino},
+         journal={Information Sciences},
+         volume={670},
+         pages={120616},
+         year={2024},
+         publisher={Elsevier}
+         }
+```
 
 ```
 ...
